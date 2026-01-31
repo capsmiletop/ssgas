@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { GasEntry } from '@/types';
 
 export default function DataEntryForm() {
-  const [formData, setFormData] = useState<GasEntry>({
+  const [formData, setFormData] = useState({
     gas_Fecha: new Date().toISOString().slice(0, 16),
     gas_Suplidor: '',
     gas_Factura: '',
-    gas_Inicio: 0,
-    gas_Fin: 0,
-    gas_Dias: 0,
+    gas_Inicio: '',
+    gas_Fin: '',
+    gas_Dias: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -18,11 +18,52 @@ export default function DataEntryForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Enforce maximum of 100 for Initial Read and Final Read
+    if (name === 'gas_Inicio' || name === 'gas_Fin') {
+      // Allow empty string
+      if (value === '') {
+        setFormData(prev => ({
+          ...prev,
+          [name]: '',
+        }));
+        return;
+      }
+      
+      // Parse the value
+      const numValue = parseFloat(value);
+      
+      // If it's a valid number
+      if (!isNaN(numValue)) {
+        // Cap at 100 if it exceeds
+        if (numValue > 100) {
+          setFormData(prev => ({
+            ...prev,
+            [name]: '100',
+          }));
+        } else if (numValue < 0) {
+          // Prevent negative values
+          setFormData(prev => ({
+            ...prev,
+            [name]: '0',
+          }));
+        } else {
+          // Allow the value (including partial input like "1" when typing "10")
+          setFormData(prev => ({
+            ...prev,
+            [name]: value,
+          }));
+        }
+      } else {
+        // If not a valid number, don't update (prevents invalid characters)
+        return;
+      }
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'gas_Fecha' ? value : name.includes('gas_Inicio') || name.includes('gas_Fin') || name.includes('gas_Dias') 
-        ? parseFloat(value) || 0 
-        : value,
+      [name]: value,
     }));
   };
 
@@ -32,12 +73,22 @@ export default function DataEntryForm() {
     setMessage(null);
 
     try {
+      // Convert string values to numbers for API
+      const submitData: GasEntry = {
+        gas_Fecha: formData.gas_Fecha,
+        gas_Suplidor: formData.gas_Suplidor,
+        gas_Factura: formData.gas_Factura,
+        gas_Inicio: parseFloat(formData.gas_Inicio as string) || 0,
+        gas_Fin: parseFloat(formData.gas_Fin as string) || 0,
+        gas_Dias: parseFloat(formData.gas_Dias as string) || 0,
+      };
+
       const response = await fetch('/api/entries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       const result = await response.json();
@@ -48,9 +99,9 @@ export default function DataEntryForm() {
           gas_Fecha: new Date().toISOString().slice(0, 16),
           gas_Suplidor: '',
           gas_Factura: '',
-          gas_Inicio: 0,
-          gas_Fin: 0,
-          gas_Dias: 0,
+          gas_Inicio: '',
+          gas_Fin: '',
+          gas_Dias: '',
         });
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to save entry' });
@@ -132,9 +183,10 @@ export default function DataEntryForm() {
             value={formData.gas_Inicio}
             onChange={handleChange}
             required
-            step="0.0001"
+            step="1"
             min="0"
             max="100"
+            placeholder=""
           />
         </div>
 
@@ -150,9 +202,10 @@ export default function DataEntryForm() {
             value={formData.gas_Fin}
             onChange={handleChange}
             required
-            step="0.0001"
+            step="1"
             min="0"
             max="100"
+            placeholder=""
           />
         </div>
 
@@ -168,8 +221,9 @@ export default function DataEntryForm() {
             value={formData.gas_Dias}
             onChange={handleChange}
             required
-            step="0.01"
+            step="1"
             min="0"
+            placeholder=""
           />
         </div>
 
