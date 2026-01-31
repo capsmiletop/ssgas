@@ -82,7 +82,7 @@ export default function DataEntryForm() {
             id="gas_Fecha"
             name="gas_Fecha"
             className="form-input"
-            value={formData.gas_Fecha}
+            value={typeof formData.gas_Fecha === 'string' ? formData.gas_Fecha : new Date(formData.gas_Fecha).toISOString().slice(0, 16)}
             onChange={handleChange}
             required
           />
