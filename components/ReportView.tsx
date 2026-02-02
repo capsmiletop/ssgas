@@ -62,17 +62,17 @@ export default function ReportView() {
     return 0;
   });
 
-  const chartData = sortedData.map(item => {
-    const index = parseFloat(item.gas_Indice?.toString() || '0');
-    return {
-      date: format(new Date(item.gas_Fecha), 'dd/MM/yyyy'),
-      'Gallons Used': parseFloat(item.gas_Consumido?.toString() || '0'),
-      'Gallons Added': parseFloat(item.gas_Comprado?.toString() || '0'),
-      'Time Elapsed': item.gas_Tiempo || '',
-      'Index': index,
-      'Amount per metric': index * 2.5,
-    };
-  }).reverse();
+  const chartData = sortedData.map(item => ({
+    date: format(new Date(item.gas_Fecha), 'dd/MM/yyyy'),
+    'Gallons Used': parseFloat(item.gas_Consumido?.toString() || '0'),
+    'Gallons Added': parseFloat(item.gas_Comprado?.toString() || '0'),
+    'Time Elapsed': item.gas_Tiempo || '',
+    'Index': parseFloat(item.gas_Indice?.toString() || '0'),
+  })).reverse();
+
+  const maxIndex = chartData.length > 0 
+    ? Math.max(...chartData.map(d => d.Index), 15.51)
+    : 15.51;
 
   const getIndexColor = (index: number): string => {
     if (index >= 0 && index <= 12.49) return '#28a745'; // Green
@@ -80,10 +80,6 @@ export default function ReportView() {
     if (index > 15.50) return '#dc3545'; // Red
     return '#6c757d'; // Default gray
   };
-
-  const maxAmountPerMetric = chartData.length > 0 
-    ? Math.max(...chartData.map(d => d['Amount per metric']), 15.51 * 2.5)
-    : 15.51 * 2.5;
 
   const getIndexIndicator = (cambio: number) => {
     if (cambio > 0) return <span className="index-indicator index-up">↗</span>;
@@ -131,19 +127,19 @@ export default function ReportView() {
                     <YAxis />
                     <ReferenceArea 
                       y1={0} 
-                      y2={12.49 * 2.5} 
+                      y2={12.49} 
                       fill="#28a745" 
                       fillOpacity={0.1}
                     />
                     <ReferenceArea 
-                      y1={12.50 * 2.5} 
-                      y2={15.50 * 2.5} 
+                      y1={12.50} 
+                      y2={15.50} 
                       fill="#ffc107" 
                       fillOpacity={0.1}
                     />
                     <ReferenceArea 
-                      y1={15.51 * 2.5} 
-                      y2={maxAmountPerMetric * 1.1} 
+                      y1={15.51} 
+                      y2={maxIndex * 1.1} 
                       fill="#dc3545" 
                       fillOpacity={0.1}
                     />
@@ -165,7 +161,7 @@ export default function ReportView() {
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="Amount per metric" 
+                      dataKey="Index" 
                       stroke="#6c757d" 
                       strokeWidth={2}
                       dot={(props: any) => {
@@ -183,7 +179,6 @@ export default function ReportView() {
                           />
                         );
                       }}
-                      name="Amount per metric (2.5)"
                     />
                   </LineChart>
                 </ResponsiveContainer>
