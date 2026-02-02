@@ -225,11 +225,14 @@ a {
   }
 
   .date-range-selector {
-    flex-direction: column;
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .date-range-btn {
-    width: 100%;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .table {

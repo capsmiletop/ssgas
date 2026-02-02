@@ -106,6 +106,41 @@ export default function ReportView() {
           <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
         ) : (
           <>
+            {chartData.length > 0 && (
+              <div className="chart-container">
+                <h3 style={{ marginBottom: '20px', color: '#333' }}>Performance Chart</h3>
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Gallons Used" 
+                      stroke="#8884d8" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Gallons Added" 
+                      stroke="#82ca9d" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="Index" 
+                      stroke="#ffc658" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
             <div style={{ overflowX: 'auto' }}>
               <table className="table">
                 <thead>
@@ -151,42 +186,6 @@ export default function ReportView() {
                 </tbody>
               </table>
             </div>
-
-            {chartData.length > 0 && (
-              <div className="chart-container">
-                <h3 style={{ marginBottom: '20px', color: '#333' }}>Performance Chart</h3>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Gallons Used" 
-                      stroke="#8884d8" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Gallons Added" 
-                      stroke="#82ca9d" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Index" 
-                      stroke="#ffc658" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
           </>
         )}
       </div>
