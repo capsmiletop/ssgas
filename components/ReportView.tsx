@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import { GasRecord, DateRange } from '@/types';
 import { format } from 'date-fns';
 
@@ -62,13 +62,28 @@ export default function ReportView() {
     return 0;
   });
 
-  const chartData = sortedData.map(item => ({
-    date: format(new Date(item.gas_Fecha), 'dd/MM/yyyy'),
-    'Gallons Used': parseFloat(item.gas_Consumido?.toString() || '0'),
-    'Gallons Added': parseFloat(item.gas_Comprado?.toString() || '0'),
-    'Time Elapsed': item.gas_Tiempo || '',
-    'Index': parseFloat(item.gas_Indice?.toString() || '0'),
-  })).reverse();
+  const chartData = sortedData.map(item => {
+    const index = parseFloat(item.gas_Indice?.toString() || '0');
+    return {
+      date: format(new Date(item.gas_Fecha), 'dd/MM/yyyy'),
+      'Gallons Used': parseFloat(item.gas_Consumido?.toString() || '0'),
+      'Gallons Added': parseFloat(item.gas_Comprado?.toString() || '0'),
+      'Time Elapsed': item.gas_Tiempo || '',
+      'Index': index,
+      'Amount per metric': index * 2.5,
+    };
+  }).reverse();
+
+  const getIndexColor = (index: number): string => {
+    if (index >= 0 && index <= 12.49) return '#28a745'; // Green
+    if (index >= 12.50 && index <= 15.50) return '#ffc107'; // Yellow
+    if (index > 15.50) return '#dc3545'; // Red
+    return '#6c757d'; // Default gray
+  };
+
+  const maxAmountPerMetric = chartData.length > 0 
+    ? Math.max(...chartData.map(d => d['Amount per metric']), 15.51 * 2.5)
+    : 15.51 * 2.5;
 
   const getIndexIndicator = (cambio: number) => {
     if (cambio > 0) return <span className="index-indicator index-up">↗</span>;
@@ -114,6 +129,24 @@ export default function ReportView() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
+                    <ReferenceArea 
+                      y1={0} 
+                      y2={12.49 * 2.5} 
+                      fill="#28a745" 
+                      fillOpacity={0.1}
+                    />
+                    <ReferenceArea 
+                      y1={12.50 * 2.5} 
+                      y2={15.50 * 2.5} 
+                      fill="#ffc107" 
+                      fillOpacity={0.1}
+                    />
+                    <ReferenceArea 
+                      y1={15.51 * 2.5} 
+                      y2={maxAmountPerMetric * 1.1} 
+                      fill="#dc3545" 
+                      fillOpacity={0.1}
+                    />
                     <Tooltip />
                     <Legend />
                     <Line 
@@ -132,10 +165,25 @@ export default function ReportView() {
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="Index" 
-                      stroke="#ffc658" 
+                      dataKey="Amount per metric" 
+                      stroke="#6c757d" 
                       strokeWidth={2}
-                      dot={{ r: 4 }}
+                      dot={(props: any) => {
+                        const { payload } = props;
+                        const index = payload?.Index || 0;
+                        const color = getIndexColor(index);
+                        return (
+                          <circle
+                            cx={props.cx}
+                            cy={props.cy}
+                            r={4}
+                            fill={color}
+                            stroke={color}
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
+                      name="Amount per metric (2.5)"
                     />
                   </LineChart>
                 </ResponsiveContainer>
