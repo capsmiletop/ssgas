@@ -81,6 +81,13 @@ export default function ReportView() {
     return '#6c757d'; // Default gray
   };
 
+  const hexToRgba = (hex: string, opacity: number): string => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
   const getIndexIndicator = (cambio: number) => {
     if (cambio > 0) return <span className="index-indicator index-up">↗</span>;
     if (cambio < 0) return <span className="index-indicator index-down">↙</span>;
@@ -118,7 +125,7 @@ export default function ReportView() {
         ) : (
           <>
             {chartData.length > 0 && (
-              <div className="chart-container">
+              <div className="chart-container" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'white', marginBottom: '20px' }}>
                 <h3 style={{ marginBottom: '20px', color: '#333' }}>Performance Chart</h3>
                 <ResponsiveContainer width="100%" height={400}>
                   <LineChart data={chartData}>
@@ -184,9 +191,9 @@ export default function ReportView() {
                 </ResponsiveContainer>
               </div>
             )}
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', maxHeight: '60vh', overflowY: 'auto' }}>
               <table className="table">
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 5, backgroundColor: '#f8f9fa' }}>
                   <tr>
                     <th onClick={() => handleSort('gas_Fecha')}>
                       Date {sortConfig?.key === 'gas_Fecha' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -213,18 +220,22 @@ export default function ReportView() {
                       </td>
                     </tr>
                   ) : (
-                    sortedData.map((row) => (
-                      <tr key={row.gas_id}>
-                        <td>{format(new Date(row.gas_Fecha), 'dd/MM/yyyy')}</td>
-                        <td>{parseFloat(row.gas_Consumido?.toString() || '0').toFixed(2)}</td>
-                        <td>{parseFloat(row.gas_Comprado?.toString() || '0').toFixed(2)}</td>
-                        <td>{row.gas_Tiempo || '-'}</td>
-                        <td>
-                          {parseFloat(row.gas_Indice?.toString() || '0').toFixed(2)}
-                          {getIndexIndicator(row.gas_Cambio || 0)}
-                        </td>
-                      </tr>
-                    ))
+                    sortedData.map((row) => {
+                      const index = parseFloat(row.gas_Indice?.toString() || '0');
+                      const rowColor = getIndexColor(index);
+                      return (
+                        <tr key={row.gas_id} style={{ backgroundColor: hexToRgba(rowColor, 0.1) }}>
+                          <td>{format(new Date(row.gas_Fecha), 'dd/MM/yyyy')}</td>
+                          <td>{parseFloat(row.gas_Consumido?.toString() || '0').toFixed(2)}</td>
+                          <td>{parseFloat(row.gas_Comprado?.toString() || '0').toFixed(2)}</td>
+                          <td>{row.gas_Tiempo || '-'}</td>
+                          <td style={{ backgroundColor: hexToRgba(rowColor, 0.3), fontWeight: 'bold' }}>
+                            {parseFloat(row.gas_Indice?.toString() || '0').toFixed(2)}
+                            {getIndexIndicator(row.gas_Cambio || 0)}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
