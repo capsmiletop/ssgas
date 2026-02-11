@@ -4,15 +4,21 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceArea } from 'recharts';
 import { GasRecord, DateRange } from '@/types';
 import { format } from 'date-fns';
+import { authStorage } from '@/lib/auth';
+import EditRecordModal from './EditRecordModal';
 
 export default function ReportView() {
   const [data, setData] = useState<GasRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>('all');
   const [sortConfig, setSortConfig] = useState<{ key: keyof GasRecord; direction: 'asc' | 'desc' } | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<number | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
     fetchData();
+    // Check if user has permission to edit
+    setCanEdit(authStorage.hasPermission('Report'));
   }, [dateRange]);
 
   const fetchData = async () => {
@@ -210,12 +216,13 @@ export default function ReportView() {
                     <th onClick={() => handleSort('gas_Indice' as keyof GasRecord)}>
                       Index {sortConfig?.key === 'gas_Indice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </th>
+                    {canEdit && <th>Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {sortedData.length === 0 ? (
                     <tr>
-                      <td colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                      <td colSpan={canEdit ? 6 : 5} style={{ textAlign: 'center', padding: '20px' }}>
                         No data available for the selected date range
                       </td>
                     </tr>
@@ -233,6 +240,17 @@ export default function ReportView() {
                             {parseFloat(row.gas_Indice?.toString() || '0').toFixed(2)}
                             {getIndexIndicator(row.gas_Cambio || 0)}
                           </td>
+                          {canEdit && (
+                            <td>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => setEditingRecordId(row.gas_id)}
+                                style={{ padding: '4px 8px', fontSize: '12px' }}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })
@@ -243,6 +261,17 @@ export default function ReportView() {
           </>
         )}
       </div>
+
+      {editingRecordId && (
+        <EditRecordModal
+          recordId={editingRecordId}
+          onClose={() => setEditingRecordId(null)}
+          onSave={() => {
+            fetchData();
+            setEditingRecordId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

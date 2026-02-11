@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GasEntry } from '@/types';
+import { authStorage } from '@/lib/auth';
 
 export default function DataEntryForm() {
   const [formData, setFormData] = useState({
@@ -156,6 +157,7 @@ export default function DataEntryForm() {
     }
 
     try {
+      const session = authStorage.getSession();
       // Convert string values to numbers for API
       const submitData: GasEntry = {
         gas_Fecha: formData.gas_Fecha,
@@ -164,6 +166,7 @@ export default function DataEntryForm() {
         gas_Inicio: parseFloat(formData.gas_Inicio as string) || 0,
         gas_Fin: parseFloat(formData.gas_Fin as string) || 0,
         gas_Dias: parseFloat(formData.gas_Dias as string) || 0,
+        gas_Usuario: session?.user.usr_Nombre || 'System',
       };
 
       const response = await fetch('/api/entries', {

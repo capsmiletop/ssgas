@@ -27,3 +27,39 @@ export interface GasRecord {
 
 export type DateRange = '90days' | 'thisMonth' | 'lastMonth' | 'thisYear' | 'lastYear' | 'all';
 
+export interface User {
+  usr_id: number;
+  usr_Nombre: string;
+  usr_Clave?: string;
+  usr_Cambiar: number;
+  usr_Activo: number;
+}
+
+export interface UserPermissions {
+  usr_id: number;
+  Dashboard?: number;
+  DataEntry?: number;
+  Report?: number;
+  Settings?: number;
+  UserManagement?: number;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  user?: User;
+  permissions?: UserPermissions;
+  requiresPasswordChange?: boolean;
+  error?: string;
+}
+
+export interface PasswordChangeRequest {
+  username: string;
+  oldPassword?: string;
+  newPassword: string;
+}
+
