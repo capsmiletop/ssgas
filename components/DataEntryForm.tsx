@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GasEntry } from '@/types';
 
 export default function DataEntryForm() {
@@ -15,9 +15,44 @@ export default function DataEntryForm() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [mostRecentDate, setMostRecentDate] = useState<Date | null>(null);
+  const [errors, setErrors] = useState<{
+    gas_Fecha?: string;
+    gas_Inicio?: string;
+    gas_Fin?: string;
+    gas_Dias?: string;
+  }>({});
+
+  useEffect(() => {
+    fetchMostRecentDate();
+  }, []);
+
+  const fetchMostRecentDate = async () => {
+    try {
+      const response = await fetch('/api/entries?dateRange=all');
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.length > 0) {
+        // The data is already sorted by gas_Fecha DESC, so the first entry is the most recent
+        const mostRecent = new Date(result.data[0].gas_Fecha);
+        setMostRecentDate(mostRecent);
+      }
+    } catch (error) {
+      console.error('Error fetching most recent date:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Clear errors when user starts typing
+    if (errors[name as keyof typeof errors]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name as keyof typeof errors];
+        return newErrors;
+      });
+    }
     
     // Enforce maximum of 100 for Initial Read and Final Read
     if (name === 'gas_Inicio' || name === 'gas_Fin') {
@@ -71,6 +106,54 @@ export default function DataEntryForm() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+    setErrors({});
+
+    // Validation
+    const validationErrors: typeof errors = {};
+
+    // Mandatory fields validation
+    if (!formData.gas_Fecha) {
+      validationErrors.gas_Fecha = 'Date is required';
+    }
+    if (!formData.gas_Inicio || formData.gas_Inicio === '') {
+      validationErrors.gas_Inicio = 'Initial Reading is required';
+    }
+    if (!formData.gas_Fin || formData.gas_Fin === '') {
+      validationErrors.gas_Fin = 'Final Reading is required';
+    }
+
+    // Final reading must not be less than initial reading
+    const initialReading = parseFloat(formData.gas_Inicio as string);
+    const finalReading = parseFloat(formData.gas_Fin as string);
+    if (!isNaN(initialReading) && !isNaN(finalReading) && finalReading < initialReading) {
+      validationErrors.gas_Fin = 'Final Reading must not be less than Initial Reading';
+    }
+
+    // Current date must not be earlier than the most recent registered date
+    if (formData.gas_Fecha && mostRecentDate) {
+      const currentDate = new Date(formData.gas_Fecha);
+      if (currentDate < mostRecentDate) {
+        validationErrors.gas_Fecha = 'The current date must not be earlier than the most recent registered date';
+      }
+    }
+
+    // Free days cannot be greater than the number of days elapsed
+    if (formData.gas_Fecha && mostRecentDate && formData.gas_Dias) {
+      const currentDate = new Date(formData.gas_Fecha);
+      const daysElapsed = Math.floor((currentDate.getTime() - mostRecentDate.getTime()) / (1000 * 60 * 60 * 24));
+      const freeDays = parseFloat(formData.gas_Dias as string);
+      
+      if (!isNaN(freeDays) && freeDays > daysElapsed) {
+        validationErrors.gas_Dias = `Free days cannot be greater than the number of days elapsed (${daysElapsed} days)`;
+      }
+    }
+
+    // If there are validation errors, stop submission
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
       // Convert string values to numbers for API
@@ -103,6 +186,9 @@ export default function DataEntryForm() {
           gas_Fin: '',
           gas_Dias: '',
         });
+        setErrors({});
+        // Refresh the most recent date after successful submission
+        fetchMostRecentDate();
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to save entry' });
       }
@@ -137,6 +223,11 @@ export default function DataEntryForm() {
             onChange={handleChange}
             required
           />
+          {errors.gas_Fecha && (
+            <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+              {errors.gas_Fecha}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -188,6 +279,11 @@ export default function DataEntryForm() {
             max="100"
             placeholder=""
           />
+          {errors.gas_Inicio && (
+            <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+              {errors.gas_Inicio}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -207,6 +303,11 @@ export default function DataEntryForm() {
             max="100"
             placeholder=""
           />
+          {errors.gas_Fin && (
+            <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+              {errors.gas_Fin}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -225,6 +326,11 @@ export default function DataEntryForm() {
             min="0"
             placeholder=""
           />
+          {errors.gas_Dias && (
+            <div style={{ color: '#dc3545', fontSize: '14px', marginTop: '4px' }}>
+              {errors.gas_Dias}
+            </div>
+          )}
         </div>
 
         <button
