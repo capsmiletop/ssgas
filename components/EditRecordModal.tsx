@@ -11,13 +11,21 @@ interface EditRecordModalProps {
 }
 
 export default function EditRecordModal({ recordId, onClose, onSave }: EditRecordModalProps) {
-  const [formData, setFormData] = useState<GasEntry>({
+  const [formData, setFormData] = useState<{
+    gas_id?: number;
+    gas_Fecha: string;
+    gas_Suplidor: string;
+    gas_Factura: string;
+    gas_Inicio: number | string;
+    gas_Fin: number | string;
+    gas_Dias: number | string;
+  }>({
     gas_Fecha: new Date().toISOString().slice(0, 16),
     gas_Suplidor: '',
     gas_Factura: '',
-    gas_Inicio: 0,
-    gas_Fin: 0,
-    gas_Dias: 0,
+    gas_Inicio: '',
+    gas_Fin: '',
+    gas_Dias: '',
   });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -77,7 +85,7 @@ export default function EditRecordModal({ recordId, onClose, onSave }: EditRecor
     if (name === 'gas_Inicio' || name === 'gas_Fin' || name === 'gas_Dias') {
       setFormData(prev => ({
         ...prev,
-        [name]: value === '' ? '' : parseFloat(value) || 0,
+        [name]: value === '' ? '' : (isNaN(parseFloat(value)) ? '' : parseFloat(value)),
       }));
     } else {
       setFormData(prev => ({
@@ -93,15 +101,21 @@ export default function EditRecordModal({ recordId, onClose, onSave }: EditRecor
     if (!formData.gas_Fecha) {
       validationErrors.gas_Fecha = 'Date is required';
     }
-    if (formData.gas_Inicio === '' || formData.gas_Inicio === null || formData.gas_Inicio === undefined) {
+    
+    const initialReading = typeof formData.gas_Inicio === 'number' 
+      ? formData.gas_Inicio 
+      : parseFloat(formData.gas_Inicio as string);
+    const finalReading = typeof formData.gas_Fin === 'number' 
+      ? formData.gas_Fin 
+      : parseFloat(formData.gas_Fin as string);
+    
+    if (formData.gas_Inicio === '' || formData.gas_Inicio === null || formData.gas_Inicio === undefined || isNaN(initialReading)) {
       validationErrors.gas_Inicio = 'Initial Reading is required';
     }
-    if (formData.gas_Fin === '' || formData.gas_Fin === null || formData.gas_Fin === undefined) {
+    if (formData.gas_Fin === '' || formData.gas_Fin === null || formData.gas_Fin === undefined || isNaN(finalReading)) {
       validationErrors.gas_Fin = 'Final Reading is required';
     }
 
-    const initialReading = typeof formData.gas_Inicio === 'number' ? formData.gas_Inicio : parseFloat(formData.gas_Inicio as any);
-    const finalReading = typeof formData.gas_Fin === 'number' ? formData.gas_Fin : parseFloat(formData.gas_Fin as any);
     if (!isNaN(initialReading) && !isNaN(finalReading) && finalReading < initialReading) {
       validationErrors.gas_Fin = 'Final Reading must not be less than Initial Reading';
     }
@@ -124,7 +138,13 @@ export default function EditRecordModal({ recordId, onClose, onSave }: EditRecor
     try {
       const session = authStorage.getSession();
       const submitData: GasEntry = {
-        ...formData,
+        gas_id: formData.gas_id,
+        gas_Fecha: formData.gas_Fecha,
+        gas_Suplidor: formData.gas_Suplidor,
+        gas_Factura: formData.gas_Factura,
+        gas_Inicio: typeof formData.gas_Inicio === 'number' ? formData.gas_Inicio : parseFloat(formData.gas_Inicio as string) || 0,
+        gas_Fin: typeof formData.gas_Fin === 'number' ? formData.gas_Fin : parseFloat(formData.gas_Fin as string) || 0,
+        gas_Dias: typeof formData.gas_Dias === 'number' ? formData.gas_Dias : parseFloat(formData.gas_Dias as string) || 0,
         gas_Usuario: session?.user.usr_Nombre || 'System',
       };
 
