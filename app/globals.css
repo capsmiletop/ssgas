@@ -88,6 +88,7 @@ a {
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
   padding: 20px;
@@ -222,22 +223,17 @@ a {
 
   .nav {
     flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 4px;
-    padding: 8px;
-    width: 100%;
-    min-width: 0;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px;
   }
 
   .nav-link {
-    flex-shrink: 0;
-    flex-grow: 0;
-    white-space: nowrap;
-    padding: 6px 12px;
-    font-size: 12px;
+    flex: 1 1 auto;
     min-width: fit-content;
+    padding: 8px 14px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .date-range-selector {
