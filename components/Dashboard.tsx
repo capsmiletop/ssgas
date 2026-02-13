@@ -75,7 +75,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className={`nav-link ${activeModule === 'report' ? 'active' : ''}`}
             onClick={() => setActiveModule('report')}
           >
-            Stored Records (Report)
+            Report
           </button>
         )}
         {hasPermission('Settings') && (
