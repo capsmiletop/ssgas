@@ -67,7 +67,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className={`nav-link ${activeModule === 'entry' ? 'active' : ''}`}
             onClick={() => setActiveModule('entry')}
           >
-            Data Entry Form
+            Data Entry
           </button>
         )}
         {hasPermission('Report') && (
@@ -83,7 +83,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className={`nav-link ${activeModule === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveModule('settings')}
           >
-            Parameters (Settings)
+            Settings
           </button>
         )}
         {hasPermission('UserManagement') && (
@@ -91,7 +91,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             className={`nav-link ${activeModule === 'users' ? 'active' : ''}`}
             onClick={() => setActiveModule('users')}
           >
-            User Management
+            Users
           </button>
         )}
       </nav>
