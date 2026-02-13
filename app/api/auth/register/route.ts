@@ -6,9 +6,13 @@ import crypto from 'crypto';
 
 function hashPassword(password: string): string {
   // Using SHA-256 with salt for better security
-  // In production, consider using bcrypt with proper salt rounds
+  // NOTE: Database field usr_Clave is varchar(50), so we truncate to 50 chars
+  // In production, consider: 1) Updating DB to varchar(255), or 2) Using bcrypt
   const salt = process.env.PASSWORD_SALT || 'default-salt-change-in-production';
-  return crypto.createHash('sha256').update(password + salt).digest('hex');
+  const fullHash = crypto.createHash('sha256').update(password + salt).digest('hex');
+  // Truncate to 50 characters to fit database field
+  // This is less secure but necessary given current DB schema
+  return fullHash.substring(0, 50);
 }
 
 function validatePassword(password: string): { valid: boolean; error?: string } {
@@ -103,18 +107,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
+    // Hash password (already truncated to 50 chars in hashPassword function)
     const hashedPassword = hashPassword(password);
 
-    // Create user with default permissions (all set to 0 - no access by default)
-    // Admin must grant permissions after registration
+    // Create user with default permissions using transaction for atomicity
     const transaction = new sql.Transaction(pool);
+    let transactionStarted = false;
     
     try {
+      // Begin transaction
       await transaction.begin();
+      transactionStarted = true;
 
       // Insert user
-      const userResult = await transaction.request()
+      const userRequest = transaction.request();
+      const userResult = await userRequest
         .input('username', sql.VarChar(50), username.trim())
         .input('password', sql.VarChar(50), hashedPassword)
         .query(`
@@ -123,17 +130,35 @@ export async function POST(request: NextRequest) {
           SELECT SCOPE_IDENTITY() AS usr_id;
         `);
 
-      const newUserId = userResult.recordset[0].usr_id;
+      // Validate user creation
+      if (!userResult.recordset || userResult.recordset.length === 0) {
+        throw new Error('Failed to create user - no recordset returned');
+      }
+
+      const newUserId = userResult.recordset[0]?.usr_id;
+
+      if (!newUserId || newUserId <= 0) {
+        throw new Error(`Invalid user ID returned from database: ${newUserId}`);
+      }
 
       // Create default permissions record (all permissions set to 0)
-      await transaction.request()
+      const permRequest = transaction.request();
+      const permResult = await permRequest
         .input('usr_id', sql.Int, newUserId)
         .query(`
           INSERT INTO permisos (usr_id, usr_DashBoard, usr_DataEntry, usr_Report, usr_Settings, usr_UserManagement)
           VALUES (@usr_id, 0, 0, 0, 0, 0);
         `);
 
+      // Verify permissions were inserted (rowsAffected is an array)
+      const rowsAffected = permResult.rowsAffected?.[0] ?? 0;
+      if (rowsAffected === 0) {
+        throw new Error('Failed to create permissions record - no rows affected');
+      }
+
+      // Commit transaction
       await transaction.commit();
+      transactionStarted = false;
 
       const response: RegisterResponse = {
         success: true,
@@ -142,22 +167,58 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(response, { status: 201 });
     } catch (error: any) {
-      await transaction.rollback();
+      // Rollback transaction if it was started
+      if (transactionStarted) {
+        try {
+          await transaction.rollback();
+        } catch (rollbackError: any) {
+          console.error('Error during transaction rollback:', rollbackError);
+          // Log but don't throw - we want to throw the original error
+        }
+      }
+      // Re-throw the original error for outer catch block
       throw error;
     }
   } catch (error: any) {
     console.error('Error during registration:', error);
+    console.error('Error details:', {
+      message: error.message,
+      number: error.number,
+      state: error.state,
+      class: error.class,
+      serverName: error.serverName,
+      procName: error.procName,
+      lineNumber: error.lineNumber,
+    });
     
-    // Handle unique constraint violation
-    if (error.number === 2627 || error.message?.includes('UNIQUE')) {
+    // Handle specific SQL Server errors
+    if (error.number === 2627 || error.message?.includes('UNIQUE') || error.message?.includes('duplicate')) {
       return NextResponse.json(
         { success: false, error: 'Username already exists' },
         { status: 409 }
       );
     }
 
+    // Handle string truncation errors
+    if (error.number === 8152 || error.message?.includes('String or binary data would be truncated')) {
+      return NextResponse.json(
+        { success: false, error: 'Data too long for database field. Please contact administrator.' },
+        { status: 500 }
+      );
+    }
+
+    // Handle transaction errors
+    if (error.message?.includes('Transaction') || error.message?.includes('aborted')) {
+      return NextResponse.json(
+        { success: false, error: 'Database transaction failed. Please try again.' },
+        { status: 500 }
+      );
+    }
+
+    // Generic error response
+    const errorMessage = error.message || 'An error occurred during registration';
     return NextResponse.json(
-      { success: false, error: error.message || 'An error occurred during registration' },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }

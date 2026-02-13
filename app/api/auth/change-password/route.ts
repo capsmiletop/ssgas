@@ -6,9 +6,12 @@ import crypto from 'crypto';
 
 function hashPassword(password: string): string {
   // Using SHA-256 with salt for better security
-  // In production, consider using bcrypt with proper salt rounds
+  // NOTE: Database field usr_Clave is varchar(50), so we truncate to 50 chars
+  // In production, consider: 1) Updating DB to varchar(255), or 2) Using bcrypt
   const salt = process.env.PASSWORD_SALT || 'default-salt-change-in-production';
-  return crypto.createHash('sha256').update(password + salt).digest('hex');
+  const fullHash = crypto.createHash('sha256').update(password + salt).digest('hex');
+  // Truncate to 50 characters to fit database field
+  return fullHash.substring(0, 50);
 }
 
 export async function POST(request: NextRequest) {
