@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { authStorage } from '@/lib/auth';
 import ReportView from './ReportView';
 import DataEntryForm from './DataEntryForm';
+import Sidebar from './Sidebar';
+import Header from './Header';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -19,6 +21,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     UserManagement?: number;
   } | null>(null);
   const [user, setUser] = useState<{ usr_Nombre: string } | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     const session = authStorage.getSession();
@@ -38,93 +43,67 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     onLogout();
   };
 
+  const handleMenuToggle = () => {
+    if (window.innerWidth <= 768) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
   return (
-    <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, color: '#333' }}>Gas Tracking System</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span style={{ color: '#666' }}>Welcome, {user?.usr_Nombre}</span>
-          <button
-            className="btn btn-secondary"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+    <div className={`app-layout ${mobileMenuOpen ? 'menu-open' : ''}`}>
+      <Sidebar
+        activeModule={activeModule}
+        onModuleChange={(module) => {
+          setActiveModule(module);
+          setMobileMenuOpen(false);
+        }}
+        permissions={permissions}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+      {mobileMenuOpen && (
+        <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+      )}
+      <div className="main-content">
+        <Header
+          userName={user?.usr_Nombre || 'User'}
+          onLogout={handleLogout}
+          onMenuToggle={handleMenuToggle}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+        />
+        <main className="content-area">
+          {activeModule === 'dashboard' && hasPermission('Dashboard') && (
+            <div className="card">
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Dashboard</h2>
+              <ReportView />
+            </div>
+          )}
 
-      <nav className="nav">
-        {hasPermission('Dashboard') && (
-          <button
-            className={`nav-link ${activeModule === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveModule('dashboard')}
-          >
-            Dashboard
-          </button>
-        )}
-        {hasPermission('DataEntry') && (
-          <button
-            className={`nav-link ${activeModule === 'entry' ? 'active' : ''}`}
-            onClick={() => setActiveModule('entry')}
-          >
-            Data Entry
-          </button>
-        )}
-        {hasPermission('Report') && (
-          <button
-            className={`nav-link ${activeModule === 'report' ? 'active' : ''}`}
-            onClick={() => setActiveModule('report')}
-          >
-            Report
-          </button>
-        )}
-        {hasPermission('Settings') && (
-          <button
-            className={`nav-link ${activeModule === 'settings' ? 'active' : ''}`}
-            onClick={() => setActiveModule('settings')}
-          >
-            Settings
-          </button>
-        )}
-        {hasPermission('UserManagement') && (
-          <button
-            className={`nav-link ${activeModule === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveModule('users')}
-          >
-            Users
-          </button>
-        )}
-      </nav>
+          {activeModule === 'entry' && hasPermission('DataEntry') && (
+            <DataEntryForm />
+          )}
 
-      <div style={{ marginTop: '20px' }}>
-        {activeModule === 'dashboard' && hasPermission('Dashboard') && (
-          <div className="card">
-            <h2 style={{ marginBottom: '20px', color: '#333' }}>Dashboard</h2>
+          {activeModule === 'report' && hasPermission('Report') && (
             <ReportView />
-          </div>
-        )}
+          )}
 
-        {activeModule === 'entry' && hasPermission('DataEntry') && (
-          <DataEntryForm />
-        )}
+          {activeModule === 'settings' && hasPermission('Settings') && (
+            <div className="card">
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>Parameters (Settings)</h2>
+              <p>Settings module - Coming soon</p>
+            </div>
+          )}
 
-        {activeModule === 'report' && hasPermission('Report') && (
-          <ReportView />
-        )}
-
-        {activeModule === 'settings' && hasPermission('Settings') && (
-          <div className="card">
-            <h2 style={{ marginBottom: '20px', color: '#333' }}>Parameters (Settings)</h2>
-            <p>Settings module - Coming soon</p>
-          </div>
-        )}
-
-        {activeModule === 'users' && hasPermission('UserManagement') && (
-          <div className="card">
-            <h2 style={{ marginBottom: '20px', color: '#333' }}>User Management</h2>
-            <p>User Management module - Coming soon</p>
-          </div>
-        )}
+          {activeModule === 'users' && hasPermission('UserManagement') && (
+            <div className="card">
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>User Management</h2>
+              <p>User Management module - Coming soon</p>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

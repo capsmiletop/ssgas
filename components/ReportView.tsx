@@ -110,7 +110,7 @@ export default function ReportView() {
   ];
 
   return (
-    <div>
+    <>
       <div className="card">
         <h2 style={{ marginBottom: '20px', color: '#333' }}>Report</h2>
         
@@ -125,78 +125,84 @@ export default function ReportView() {
             </button>
           ))}
         </div>
+      </div>
 
-        {loading ? (
+      {loading ? (
+        <div className="card">
           <div style={{ textAlign: 'center', padding: '40px' }}>Loading...</div>
-        ) : (
-          <>
-            {chartData.length > 0 && (
-              <div className="chart-container" style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'white', marginBottom: '20px' }}>
-                <h3 style={{ marginBottom: '20px', color: '#333' }}>Performance Chart</h3>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <ReferenceArea 
-                      y1={0} 
-                      y2={12.49} 
-                      fill="#28a745" 
-                      fillOpacity={0.1}
-                    />
-                    <ReferenceArea 
-                      y1={12.50} 
-                      y2={15.50} 
-                      fill="#ffc107" 
-                      fillOpacity={0.1}
-                    />
-                    <ReferenceArea 
-                      y1={15.51} 
-                      y2={maxIndex * 1.1} 
-                      fill="#dc3545" 
-                      fillOpacity={0.1}
-                    />
-                    <Tooltip />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Gallons Used" 
-                      stroke="#8884d8" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Gallons Added" 
-                      stroke="#82ca9d" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="Index" 
-                      stroke="#6c757d" 
-                      strokeWidth={2}
-                      dot={(props: any) => {
-                        const { payload } = props;
-                        const index = payload?.Index || 0;
-                        const color = getIndexColor(index);
-                        return (
-                          <circle
-                            cx={props.cx}
-                            cy={props.cy}
-                            r={4}
-                            fill={color}
-                            stroke={color}
-                            strokeWidth={2}
-                          />
-                        );
-                      }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            )}
+        </div>
+      ) : (
+        <>
+          {chartData.length > 0 && (
+            <div className="card">
+              <h3 style={{ marginBottom: '20px', color: '#333' }}>Performance Chart</h3>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <ReferenceArea 
+                    y1={0} 
+                    y2={12.49} 
+                    fill="#28a745" 
+                    fillOpacity={0.1}
+                  />
+                  <ReferenceArea 
+                    y1={12.50} 
+                    y2={15.50} 
+                    fill="#ffc107" 
+                    fillOpacity={0.1}
+                  />
+                  <ReferenceArea 
+                    y1={15.51} 
+                    y2={maxIndex * 1.1} 
+                    fill="#dc3545" 
+                    fillOpacity={0.1}
+                  />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Gallons Used" 
+                    stroke="#8884d8" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Gallons Added" 
+                    stroke="#82ca9d" 
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="Index" 
+                    stroke="#6c757d" 
+                    strokeWidth={2}
+                    dot={(props: any) => {
+                      const { payload } = props;
+                      const index = payload?.Index || 0;
+                      const color = getIndexColor(index);
+                      return (
+                        <circle
+                          cx={props.cx}
+                          cy={props.cy}
+                          r={4}
+                          fill={color}
+                          stroke={color}
+                          strokeWidth={2}
+                        />
+                      );
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          <div className="card">
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>Data Table</h3>
             <div style={{ overflowX: 'auto', maxHeight: '60vh', overflowY: 'auto' }}>
               <table className="table">
                 <thead style={{ position: 'sticky', top: 0, zIndex: 5, backgroundColor: '#f8f9fa' }}>
@@ -258,9 +264,9 @@ export default function ReportView() {
                 </tbody>
               </table>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
 
       {editingRecordId && (
         <EditRecordModal
@@ -272,7 +278,7 @@ export default function ReportView() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 
