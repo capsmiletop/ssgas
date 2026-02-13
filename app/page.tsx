@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import LoginForm from '@/components/LoginForm';
+import RegistrationForm from '@/components/RegistrationForm';
 import PasswordChangeForm from '@/components/PasswordChangeForm';
 import Dashboard from '@/components/Dashboard';
 import { authStorage } from '@/lib/auth';
 
-type AppState = 'login' | 'password-change' | 'dashboard';
+type AppState = 'login' | 'register' | 'password-change' | 'dashboard';
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('login');
@@ -26,6 +27,16 @@ export default function Home() {
         setAppState('dashboard');
       }
     }
+
+    // Listen for registration request
+    const handleShowRegistration = () => {
+      setAppState('register');
+    };
+
+    window.addEventListener('showRegistration', handleShowRegistration);
+    return () => {
+      window.removeEventListener('showRegistration', handleShowRegistration);
+    };
   }, []);
 
   const handleLoginSuccess = () => {
@@ -55,12 +66,27 @@ export default function Home() {
     setIsFirstLogin(false);
   };
 
+  const handleRegistrationSuccess = () => {
+    setAppState('login');
+  };
+
+  const handleBackToLogin = () => {
+    setAppState('login');
+  };
+
   return (
     <>
       {appState === 'login' && (
         <LoginForm
           onLoginSuccess={handleLoginSuccess}
           onPasswordChangeRequest={handlePasswordChangeRequest}
+        />
+      )}
+
+      {appState === 'register' && (
+        <RegistrationForm
+          onRegistrationSuccess={handleRegistrationSuccess}
+          onBackToLogin={handleBackToLogin}
         />
       )}
 

@@ -133,6 +133,21 @@ export default function LoginForm({ onLoginSuccess, onPasswordChangeRequest }: L
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+
+      <div style={{ textAlign: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #dee2e6' }}>
+        <p style={{ marginBottom: '10px', color: '#666' }}>Don't have an account?</p>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => {
+            const event = new CustomEvent('showRegistration');
+            window.dispatchEvent(event);
+          }}
+          style={{ width: '100%' }}
+        >
+          Create Account
+        </button>
+      </div>
     </div>
   );
 }

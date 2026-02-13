@@ -44,6 +44,18 @@ export interface UserPermissions {
   UserManagement?: number;
 }
 
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;

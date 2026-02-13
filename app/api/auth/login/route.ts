@@ -5,8 +5,10 @@ import { LoginRequest, LoginResponse } from '@/types';
 import crypto from 'crypto';
 
 function hashPassword(password: string): string {
-  // Simple hash function - in production, use bcrypt or similar
-  return crypto.createHash('sha256').update(password).digest('hex');
+  // Using SHA-256 with salt for better security
+  // In production, consider using bcrypt with proper salt rounds
+  const salt = process.env.PASSWORD_SALT || 'default-salt-change-in-production';
+  return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
 export async function POST(request: NextRequest) {
@@ -68,11 +70,11 @@ export async function POST(request: NextRequest) {
       .query(`
         SELECT 
           usr_id,
-          Dashboard,
-          DataEntry,
-          Report,
-          Settings,
-          UserManagement
+          usr_DashBoard AS Dashboard,
+          usr_DataEntry AS DataEntry,
+          usr_Report AS Report,
+          usr_Settings AS Settings,
+          usr_UserManagement AS UserManagement
         FROM permisos
         WHERE usr_id = @usr_id
       `);

@@ -5,7 +5,10 @@ import { PasswordChangeRequest } from '@/types';
 import crypto from 'crypto';
 
 function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  // Using SHA-256 with salt for better security
+  // In production, consider using bcrypt with proper salt rounds
+  const salt = process.env.PASSWORD_SALT || 'default-salt-change-in-production';
+  return crypto.createHash('sha256').update(password + salt).digest('hex');
 }
 
 export async function POST(request: NextRequest) {
