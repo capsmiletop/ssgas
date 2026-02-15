@@ -40,19 +40,26 @@ export default function Header({ userName, onLogout, onMenuToggle, searchValue, 
         >
           ☰
         </button>
-        <h1 className="header-title">Gas Tracking System</h1>
+        <div className="header-brand">
+          <div className="header-logo-container">
+            <img src="/images/logo.ico" alt="Gas Tracking System" className="header-logo" />
+          </div>
+          <h1 className="header-title">
+            <span className="header-text">Gas Tracking System</span>
+          </h1>
+        </div>
       </div>
       <div className="header-right">
         {onSearchChange && (
           <div className="search-container">
-            <input
+            {/* <input
               type="text"
               className="search-input"
               placeholder="Search..."
               value={searchValue || ''}
               onChange={(e) => onSearchChange(e.target.value)}
             />
-            <span className="search-icon">🔍</span>
+            <span className="search-icon">🔍</span> */}
           </div>
         )}
         <div className="account-dropdown" ref={dropdownRef}>

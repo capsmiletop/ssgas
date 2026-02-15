@@ -4,6 +4,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Gas Tracking System',
   description: 'Offline Gas Data Entry and Reporting System',
+  icons: {
+    icon: '/images/brand.ico',
+  },
 }
 
 export default function RootLayout({

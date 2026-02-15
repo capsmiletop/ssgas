@@ -209,11 +209,42 @@ a {
   background-color: #f0f0f0;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo-container {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.header-logo-container > .header-logo {
+  width: 200px;
+  height: 50px;
+  object-fit: contain;
+  display: block;
+}
+
+.header-logo-container > .header-logo:hover {
+  opacity: 0.8;
+}
+
 .header-title {
   font-size: 20px;
   font-weight: 600;
   color: #333;
   margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.header-title > .header-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
 }
 
 .header-right {
